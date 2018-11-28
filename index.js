@@ -8,15 +8,21 @@ handlers.hello = function(callback){
 	var payload = {'message':'Welcome to my first node js server'};
 	callback(200, payload);
 }
-var routes = { 'hello': handlers.hello};
+handlers.default = function(callback){
+	var payload = {'error': 'Resource not available'};
+	callback(404, payload);
+}
+var routes = { 'hello': handlers.hello,
+				'default': handlers.default
+			 };
 
 var server = http.createServer(function(req, res){
 	
 	var parsedUrl = url.parse(req.url, true);
 
 	var path = parsedUrl.pathname;
-    console.log('a request came and path is ', path.replace('\/',''));
-    res.writeHead(200, {'Content-Type': 'application/json'})
+    console.log('A request came and path is ', path.replace('\/',''));
+    
 
     var decoder = new StringDecoder('utf-8');
     var buffer = '';
@@ -27,10 +33,11 @@ var server = http.createServer(function(req, res){
 
     req.on('end', function(){
     	buffer += decoder.end();
-    	console.log('inside end event');
+    	console.log('Inside end event');
     	var trimmedPath = path.replace('\/','');
-    	var chosenHandler = typeof(routes[trimmedPath]) !== 'undefined' ? routes[trimmedPath] : routes.hello;
+    	var chosenHandler = typeof(routes[trimmedPath]) !== 'undefined' ? routes[trimmedPath] : routes.default;
     	chosenHandler(function(status, payload){
+    		res.writeHead(status, {'Content-Type': 'application/json'})
     		res.end(JSON.stringify(payload));
     	});
     });
